@@ -6,19 +6,15 @@
  * @LastEditTime: 2021-10-13 14:05:59
 -->
 <script setup lang="ts">
-  import {
-    onMounted,
-    ref,
-    nextTick,
-    getCurrentInstance,
-    watch,
-    toRaw,
-  } from 'vue';
+  import { onMounted, ref, nextTick, getCurrentInstance, watch } from 'vue';
   // 测试本地使用
   // import { Meta2d } from "../../../../packages/core";
   // import { register as registerEcharts } from '@meta2d/chart-diagram';
-  import { Pen, Meta2d, EventAction } from '@meta2d/core';
+  import { Pen, Meta2d } from '@meta2d/core';
+  import { useMeta2dStore } from '@/store/index';
 
+  const store = useMeta2dStore();
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const { $Bus } = getCurrentInstance()!.appContext.config.globalProperties;
 
   const visible = ref(false);
@@ -59,6 +55,7 @@
       if (e.length === 1) {
         // currentPen.value = e[0];
         [currentPen.value] = e;
+        store.setPen(e[0]);
         $Bus.emit('activePen', currentPen.value);
         // vue 打开弹窗
         // visible.value = true;
@@ -67,6 +64,19 @@
     meta2d.on('inactive', (e) => {
       // console.log(e);
       $Bus.emit('inactivePen');
+    });
+    meta2d.on('update', (e) => {
+      console.log('update');
+      if (e.current.length === 1) {
+        store.setPen(e.current[0]);
+
+        // $Bus.emit('activePen', currentPen.value);
+        // vue 打开弹窗
+        // visible.value = true;
+      }
+    });
+    watch(store, () => {
+      meta2d.setValue(store.pen);
     });
     nextTick(() => {
       // window.meta2d.addPen(pen2, true);

@@ -6,51 +6,54 @@
  * @LastEditTime: 2021-10-13 14:26:48
 -->
 <script setup lang="ts">
-  import {
-    nextTick,
-    ref,
-    reactive,
-    getCurrentInstance,
-    onMounted,
-    toRefs,
-  } from 'vue';
+  import { nextTick, ref, getCurrentInstance, onMounted } from 'vue';
   import { Pen } from '@meta2d/core';
   import { isObject } from '@/utils/is';
+  import { useMeta2dStore } from '@/store/index';
 
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const { $Bus } = getCurrentInstance()!.appContext.config.globalProperties;
 
   const penRef = ref<Pen>({});
   const tabKey = ref<number>(1);
   const isActive = ref(false);
-  nextTick(() => {
-    // 此处只注册，未将数据放置到工具栏
-    // data.ts 中配置的最后一项即为该图形库中的内容
-    // (window as any).registerToolsNew();
-    // (window as any).meta2dTools = undefined;
-  });
+  const store = useMeta2dStore();
 
   onMounted(() => {
     // 监听事件
     $Bus.on('activePen', (res) => {
       // res 就是emit传过来的数据
-      console.log(res);
+      // console.log(res);
       if (isObject(res)) {
         penRef.value = res;
       }
-      tabKey.value = 1;
-      isActive.value = true;
+
+      nextTick(() => {
+        isActive.value = true;
+        tabKey.value = 1;
+      });
+
       // pen = reactive(res);
     });
     $Bus.on('inactivePen', () => {
       // res 就是emit传过来的数据
-      tabKey.value = 4;
-
-      isActive.value = false;
-
-      // pen = reactive<Pen>({ text: '' });
-      penRef.value = {};
+      nextTick(() => {
+        isActive.value = false;
+        tabKey.value = 4;
+        // pen = reactive<Pen>({ text: '' });
+        penRef.value = {};
+      });
     });
   });
+  // const xCt = computed(() => {
+  //   return String(store.pen.x);
+  // });
+  const formatter = (value: number) => {
+    return String(Math.round(value));
+  };
+  // const parser = (value: number) => {
+  //   return String(value);
+  // };
 </script>
 
 <template>
@@ -60,17 +63,27 @@
         <a-tab-pane key="1" title="外观">
           <a-list size="small">
             <!-- <template #header> List title </template> -->
-            <a-list-item>{{ penRef.x }} </a-list-item>
-            <a-list-item>{{ penRef.y }} </a-list-item>
-            <a-list-item>{{ penRef.width }} </a-list-item>
-            <a-list-item>{{ penRef.height }} </a-list-item>
+            <a-list-item>
+              <a-input-number
+                v-model="store.pen.x"
+                placeholder="x"
+                :formatter="formatter"
+              />
+
+              <!-- {{ Math.round() }} -->
+            </a-list-item>
+            <a-list-item>y:{{ Math.round(store.pen.y) }} </a-list-item>
+            <a-list-item>width:{{ Math.round(store.pen.width) }} </a-list-item>
+            <a-list-item
+              >height:{{ Math.round(store.pen.height) }}
+            </a-list-item>
           </a-list>
         </a-tab-pane>
         <a-tab-pane key="2" title="数据">
           <a-list size="small">
             <!-- <template #header> List title </template> -->
-            <a-list-item>{{ penRef.id }} </a-list-item>
-            <a-list-item> {{ penRef.text }} </a-list-item>
+            <a-list-item>{{ store.pen.id }} </a-list-item>
+            <a-list-item> {{ store.pen.text }} </a-list-item>
           </a-list>
         </a-tab-pane>
         <!-- <a-tab-pane key="3" title="事件"> </a-tab-pane> -->
